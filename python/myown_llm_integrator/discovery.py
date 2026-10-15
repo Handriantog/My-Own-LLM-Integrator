@@ -2,10 +2,12 @@
 import json
 import os
 import selectors
+import signal
 import subprocess
 import tempfile
 import time
-from .process import _environment
+from .errors import ProviderError
+from .process import _environment, _run
 
 def codex_catalog(binary, timeout=6):
     """Read model/list only. Never create a thread, turn or inference request."""
@@ -14,7 +16,7 @@ def codex_catalog(binary, timeout=6):
         process = subprocess.Popen([binary, '--no-daemon', '-c', 'features.plugins=false',
             '-c', 'features.apps=false', '-c', 'model_provider="openai"',
             'app-server', '--listen', 'stdio://'], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL, cwd=directory, env=_environment())
+            stderr=subprocess.DEVNULL, cwd=directory, env=_environment(), start_new_session=True)
         selector = selectors.DefaultSelector()
         selector.register(process.stdout, selectors.EVENT_READ)
         buffer = b''
@@ -53,12 +55,11 @@ def codex_catalog(binary, timeout=6):
                     for m in result.get('data', []) if isinstance(m.get('model'), str)]
         finally:
             selector.close()
-            process.terminate()
             try:
-                process.wait(timeout=1)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait()
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.wait()
             process.stdin.close()
             process.stdout.close()
 
@@ -69,11 +70,14 @@ def codex_cli_catalog(binary):
     Keep this distinct from a verified account entitlement or inference probe.
     Older CLIs without this command leave discovery unavailable.
     """
-    result = subprocess.run([binary, '--no-daemon', 'debug', 'models'],
-        capture_output=True, text=True, timeout=5, env=_environment())
-    if result.returncode != 0 or len(result.stdout) > 2_000_000:
+    try:
+        code, stdout, _ = _run([binary, '--no-daemon', 'debug', 'models'],
+            timeout=5, cwd=os.getcwd(), env=_environment(), output_limit=2_000_000)
+    except ProviderError:
+        raise ValueError('Codex model catalog is unavailable') from None
+    if code != 0:
         raise ValueError('Codex model catalog is unavailable')
-    data = json.loads(result.stdout)
+    data = json.loads(stdout)
     if not isinstance(data, dict) or not isinstance(data.get('models'), list):
         raise ValueError('Unexpected Codex model catalog')
     return [{'id':model['slug'], 'name':model.get('display_name') or model['slug'], 'source':'catalog'}

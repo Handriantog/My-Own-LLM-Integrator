@@ -6,8 +6,10 @@ import tempfile
 from pathlib import Path
 from contextlib import nullcontext
 import jsonschema
+from referencing import Registry
+from referencing.exceptions import Unresolvable
 from .errors import ProviderError as CodexProviderError
-from .process import DEFAULT, _environment, _positive_seconds, _request_slot, _run
+from .process import DEFAULT, MAX_OUTPUT, _environment, _positive_seconds, _request_slot, _run
 
 def run_codex(prompt: str, schema: dict, cancel_event=None, *, model=DEFAULT, serialize=True) -> tuple[dict, dict]:
     executable = shutil.which(os.environ.get('CODEX_BIN', 'codex'))
@@ -86,11 +88,17 @@ def run_codex(prompt: str, schema: dict, cancel_event=None, *, model=DEFAULT, se
         if usage is None:
             raise CodexProviderError('Codex returned no completed turn. Update the CLI and retry.')
         try:
-            result = json.loads(output_path.read_text(encoding='utf-8'))
+            with output_path.open('rb') as response:
+                raw = response.read(MAX_OUTPUT + 1)
+            if len(raw) > MAX_OUTPUT:
+                raise CodexProviderError('Codex response exceeded the output limit.')
+            result = json.loads(raw.decode('utf-8'))
         except (OSError, ValueError):
             raise CodexProviderError('Codex returned an invalid structured response.') from None
         try:
-            jsonschema.validate(result, schema)
+            jsonschema.validate(result, schema, registry=Registry())
         except jsonschema.ValidationError:
             raise CodexProviderError('Codex returned an invalid response envelope.') from None
+        except Unresolvable:
+            raise CodexProviderError('Schema reference could not be resolved. Include referenced schemas in the request.') from None
         return result, usage

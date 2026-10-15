@@ -7,6 +7,8 @@ import tempfile
 from contextlib import nullcontext
 
 import jsonschema
+from referencing import Registry
+from referencing.exceptions import Unresolvable
 
 from .errors import ProviderError
 from .process import DEFAULT, _environment, _positive_seconds, _request_slot, _run
@@ -155,7 +157,10 @@ def run_agent(prompt: str, schema: dict, cancel_event=None, *, provider=None, mo
             raise ProviderError(f'{selected.name} request failed. Check login, model access, and CLI version; no fallback was used.')
         result, usage = parse_output(stdout.strip(), output_format)
         try:
-            jsonschema.validate(result, schema)
+            # An explicit registry keeps validation offline, including file:// refs.
+            jsonschema.validate(result, schema, registry=Registry())
         except jsonschema.ValidationError:
             raise ProviderError(f'{selected.name} returned an invalid response envelope.') from None
+        except Unresolvable:
+            raise ProviderError('Schema reference could not be resolved. Include referenced schemas in the request.') from None
         return result, usage

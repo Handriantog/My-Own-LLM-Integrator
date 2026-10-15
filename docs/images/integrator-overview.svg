@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="440" viewBox="0 0 1200 440" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">One integration for your local apps</title>
+  <desc id="desc">Node applications use the npm API and Python applications use the engine directly. Both connect through My Own LLM Integrator to authenticated provider CLIs. The engine returns schema-validated JSON and provider-reported usage.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1200" y2="440" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#17191C"/>
+      <stop offset="1" stop-color="#0E0F11"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M1 1L9 5L1 9" stroke="#FF951F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect x="1" y="1" width="1198" height="438" rx="26" fill="url(#background)" stroke="#303237" stroke-width="2"/>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif">
+    <text x="48" y="48" fill="#FF951F" font-size="14" font-weight="700" letter-spacing="3">MYOWNSTACK / SHARED INFERENCE</text>
+    <text x="48" y="96" fill="#F8F5ED" font-size="34" font-weight="700">One connection. More things to build.</text>
+    <text x="48" y="129" fill="#AEB0B7" font-size="18">Your app owns the workflow. Your CLI owns the login.</text>
+
+    <rect x="48" y="177" width="262" height="72" rx="14" fill="#202226" stroke="#3E4046"/>
+    <circle cx="76" cy="213" r="6" fill="#FF951F"/>
+    <text x="96" y="208" fill="#F8F5ED" font-size="20" font-weight="600">Node applications</text>
+    <text x="96" y="233" fill="#AEB0B7" font-size="15">JavaScript API · TypeScript types</text>
+
+    <rect x="48" y="269" width="262" height="72" rx="14" fill="#202226" stroke="#3E4046"/>
+    <circle cx="76" cy="305" r="6" fill="#F8F5ED"/>
+    <text x="96" y="300" fill="#F8F5ED" font-size="20" font-weight="600">Python applications</text>
+    <text x="96" y="325" fill="#AEB0B7" font-size="15">Direct engine integration</text>
+
+    <path d="M310 213H352Q368 213 368 229V259H411" stroke="#FF951F" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M310 305H352Q368 305 368 289V259" stroke="#FF951F" stroke-width="2"/>
+
+    <rect x="423" y="177" width="350" height="164" rx="18" fill="#F8F5ED"/>
+    <rect x="447" y="198" width="110" height="25" rx="12.5" fill="#E7DED1"/>
+    <text x="502" y="215" fill="#5C4733" font-size="12" font-weight="700" text-anchor="middle" letter-spacing="1">npm PACKAGE</text>
+    <text x="447" y="256" fill="#17191C" font-size="25" font-weight="700">My Own LLM Integrator</text>
+    <text x="447" y="286" fill="#5A5B60" font-size="17">Shared Python execution engine</text>
+    <text x="447" y="315" fill="#5A5B60" font-size="15">Timeouts · Cancellation · JSON validation</text>
+
+    <path d="M773 259H851" stroke="#FF951F" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="863" y="177" width="289" height="164" rx="18" fill="#202226" stroke="#3E4046"/>
+    <text x="887" y="214" fill="#F8F5ED" font-size="22" font-weight="600">Your authenticated CLI</text>
+    <text x="887" y="248" fill="#C3C4CA" font-size="17">Codex · Claude Code · Gemini</text>
+    <text x="887" y="277" fill="#C3C4CA" font-size="17">Cursor + 11 more presets</text>
+    <text x="887" y="315" fill="#FF951F" font-size="15">Provider account + model access</text>
+
+    <path d="M48 371H1152" stroke="#303237"/>
+    <text x="48" y="405" fill="#F8F5ED" font-size="17" font-weight="600">Prompt + schema in</text>
+    <text x="427" y="405" fill="#AEB0B7" font-size="17">Validated JSON + reported usage out</text>
+    <text x="1152" y="405" fill="#AEB0B7" font-size="14" text-anchor="end">Local runtime · Remote inference</text>
+  </g>
+</svg>

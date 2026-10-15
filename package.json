@@ -4,13 +4,30 @@
   "description": "Use locally authenticated AI CLIs through a reusable subscription inference API",
   "type": "module",
   "license": "AGPL-3.0-only",
-  "engines": { "node": ">=22.12.0" },
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
     "./package.json": "./package.json"
   },
-  "bin": { "myown-llm-integrator": "dist/cli.js" },
-  "files": ["dist", "python/pyproject.toml", "python/uv.lock", "python/bridge.py", "python/myown_llm_integrator/*.py", "README.md", "NOTICE", "LICENSE", "docs"],
+  "bin": {
+    "myown-llm-integrator": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "python/pyproject.toml",
+    "python/uv.lock",
+    "python/bridge.py",
+    "python/myown_llm_integrator/*.py",
+    "README.md",
+    "NOTICE",
+    "LICENSE",
+    "docs"
+  ],
   "scripts": {
     "build": "node scripts/build.mjs",
     "prepare": "npm run build",
@@ -20,5 +37,9 @@
     "test:python": "uv run --project python --frozen python -m pytest python/tests -q",
     "test:pack": "node scripts/smoke-pack.mjs",
     "check": "npm run build && npm test && npm run test:python"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Handriantog/My-Own-LLM-Integrator.git"
   }
 }

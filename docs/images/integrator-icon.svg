@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none" role="img" aria-labelledby="title">
+  <title id="title">My Own LLM Integrator: connected services</title>
+  <rect width="256" height="256" rx="48" fill="#101113"/>
+  <path d="M65 65L128 128M65 191L128 128M128 128H192" stroke="#F8F5ED" stroke-width="14" stroke-linecap="round"/>
+  <rect x="38" y="38" width="54" height="54" rx="15" fill="#F8F5ED"/>
+  <rect x="38" y="164" width="54" height="54" rx="15" fill="#F8F5ED"/>
+  <circle cx="128" cy="128" r="29" fill="#101113" stroke="#F8F5ED" stroke-width="12"/>
+  <circle cx="192" cy="128" r="29" fill="#FF8618"/>
+</svg>

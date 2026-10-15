@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Local subscription-authenticated AI CLI inference engine"
 requires-python = ">=3.11"
 license = "AGPL-3.0-only"
-dependencies = ["jsonschema>=4.0.0,<5"]
+dependencies = ["jsonschema>=4.18.0,<5", "referencing>=0.28.4,<1"]
 
 [build-system]
 requires = ["hatchling"]
