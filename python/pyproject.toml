@@ -1,0 +1,17 @@
+[project]
+name = "myown-llm-integrator"
+version = "0.1.0"
+description = "Local subscription-authenticated AI CLI inference engine"
+requires-python = ">=3.11"
+license = "AGPL-3.0-only"
+dependencies = ["jsonschema>=4.0.0,<5"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = ["pytest>=8,<10"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["myown_llm_integrator"]

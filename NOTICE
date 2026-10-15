@@ -1,0 +1,4 @@
+MyOwnLlmIntegrator was extracted from MyOwnResearcher on 2026-10-15.
+MyOwnResearcher is an AGPL-3.0 fork of MiroFish.
+The existing CLI transport and provider presets are retained and adapted here.
+See LICENSE for the inherited license terms.
