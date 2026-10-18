@@ -82,3 +82,7 @@ export function listProviders(options) { return invoke({ operation: 'providers' 
 
 /** Check executable/configuration only; this does not run inference or verify login. */
 export function validateProvider(provider, options) { return invoke({ operation: 'validate', provider }, options); }
+
+export { createAgentSession } from './session.js';
+
+export { createProviderSession } from './provider-session.js';

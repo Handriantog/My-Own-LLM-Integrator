@@ -105,7 +105,7 @@ For a portable artifact, build a tarball in the integrator repository and instal
 npm pack
 
 # In your app
-npm install /absolute/path/myown-llm-integrator-0.1.0.tgz
+npm install /absolute/path/myown-llm-integrator-0.2.0.tgz
 ```
 
 The tarball includes the built JavaScript API/CLI, TypeScript declarations, Python source and lockfile, documentation, and license. The consumer does not need either source repository beside it.
@@ -166,6 +166,8 @@ const selected = await validateProvider('claude-code');
 
 `listProviders()` and `validateProvider()` do not invoke a provider for inference. Provider failures reject with a sanitized `ProviderError`; raw CLI logs are not returned. The API returns one final structured result and does not support streaming.
 
+For repeated requests, the additive [`createAgentSession` API](docs/latency-sessions.md) reuses a warm Python runtime and reports startup, engine, and total timings. It preserves the existing provider logic and validation. `runAgent` remains unchanged; adopting sessions is an explicit caller choice.
+
 To override configuration for one call, use `env: { ...process.env, AGENT_BIN: '/absolute/path/to/cli' }`. Model selection does not mutate the caller's environment.
 
 </details>
@@ -188,7 +190,7 @@ Install the npm dependency first. In an existing Python project's `pyproject.tom
 
 ```toml
 [project]
-dependencies = ["myown-llm-integrator==0.1.0"]
+dependencies = ["myown-llm-integrator==0.2.0"]
 
 [tool.uv.sources]
 myown-llm-integrator = { path = "../node_modules/myown-llm-integrator/python", editable = true }
@@ -356,3 +358,5 @@ Provider CLIs and services retain their own licenses and terms. This project is 
 ---
 
 <p align="center"><strong>Build the next tool in your own stack.</strong><br><a href="#quickstart">Connect your first app →</a></p>
+
+An additional opt-in [`createProviderSession`](docs/provider-sessions.md) API keeps a restricted Codex 0.157.1 app-server alive for one application call and emits independently validated text records. It requires caller-owned persistence/playback governance; ordinary inference APIs are unchanged.

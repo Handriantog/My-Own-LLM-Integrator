@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, writeFile, rm, mkdir } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, chmod, rm, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,6 +15,9 @@ try {
   const paths = pack.files.map(file => file.path);
   assert.ok(paths.includes('dist/index.js') && paths.includes('dist/index.d.ts'));
   assert.ok(paths.includes('python/myown_llm_integrator/worker.py'));
+  assert.ok(paths.includes('python/session_bridge.py') && paths.includes('dist/session.js'));
+  assert.ok(paths.includes('python/provider_bridge.py') && paths.includes('dist/provider-session.js'));
+  assert.ok(paths.includes('python/myown_llm_integrator/provider_session.py'));
   assert.ok(paths.includes('python/uv.lock'));
   assert.ok(!paths.some(path => /(^|\/)(\.venv|__pycache__|\.env|node_modules|tests)(\/|$)/.test(path)));
   const consumer = join(root, 'consumer');
@@ -27,13 +30,37 @@ try {
     console.log(JSON.stringify({answer:'standalone'}));`);
   await writeFile(join(consumer, 'verify.mjs'), `
     import assert from 'node:assert/strict';
-    import {runAgent,listProviders} from 'myown-llm-integrator';
+    import {runAgent,listProviders,createAgentSession,createProviderSession} from 'myown-llm-integrator';
     const providers=await listProviders(); assert.equal(providers.length,15);
     const result=await runAgent({provider:'pi',prompt:'packed consumer',schema:{type:'object',required:['answer']}});
     assert.deepEqual(result,{result:{answer:'standalone'},usage:{}});
-    console.log('Packed Node consumer passed');
+    const session=createAgentSession();
+    try {
+      await session.warm();
+      const reused=await session.runAgent({provider:'pi',prompt:'packed consumer',schema:{type:'object',required:['answer']}});
+      assert.deepEqual(reused.result,result.result);
+      assert.equal(reused.timings.reusedRuntime,true);
+    } finally { await session.close(); }
+    const provider=createProviderSession();
+    try {
+      await provider.warm();
+      const spans=[];
+      const decision=await provider.runDecision({prompt:'packed authoritative context',toolNames:['lookup'],onText:record=>{spans.push(record);}});
+      assert.deepEqual(decision.result,{text:'First sentence. Second sentence.',toolCalls:[]});
+      assert.equal(spans.length,2);
+      assert.equal(decision.timings.reusedProvider,true);
+      assert.ok(decision.timings.phases.firstDeltaMs >= 0);
+      assert.ok(decision.timings.phases.firstValidatedTextMs >= decision.timings.phases.firstDeltaMs);
+      assert.ok(decision.timings.phases.totalMs <= decision.timings.inferenceMs);
+    } finally { await provider.close(); }
+    console.log('Packed Node consumer and provider stream passed');
   `);
-  const env = { ...process.env, AGENT_COMMAND_JSON: JSON.stringify([process.execPath, wrapper]), AGENT_LOCK_PATH: join(root, 'requests.lock') };
+  const fakeCodex=join(root,'codex');
+  const fixtureSource=await readFile(new URL('../tests/fixtures/app-server.py',import.meta.url),'utf8');
+  await writeFile(fakeCodex,fixtureSource.replace('#!/usr/bin/env python3',`#!${join(consumer,'node_modules/myown-llm-integrator/python/.venv/bin/python')}`));
+  await chmod(fakeCodex,0o755);
+  await writeFile(join(root,'options.json'),'{}');
+  const env = { ...process.env, CODEX_BIN:fakeCodex, CODEX_LOCK_PATH:join(root,'codex.lock'), AGENT_COMMAND_JSON: JSON.stringify([process.execPath, wrapper]), AGENT_LOCK_PATH: join(root, 'requests.lock') };
   const result = await exec(process.execPath, ['verify.mjs'], { cwd: consumer, env, timeout: 120_000 });
   console.log(result.stdout.trim());
   const python = join(consumer, 'node_modules/myown-llm-integrator/python/.venv/bin/python');
