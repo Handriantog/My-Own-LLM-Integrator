@@ -1,0 +1,19 @@
+# Restricted research (candidate)
+
+`runResearch({prompt, schema, webSearch, model?, signal?, timeoutMs?})` is an additive one-call contract. Ordinary `runAgent` and provider sessions remain web-disabled. Only Codex CLI **0.163.0** with an existing ChatGPT login is accepted. Other CLI versions, providers, API-key login, model fallback and unsafe effective configuration fail closed. This does not change the version qualification of existing provider sessions.
+
+Discovery (`webSearch:true`) must produce observed provider web-search activity. Synthesis (`false`) must produce none. Each uses a fresh ephemeral thread with no environments, dynamic tools, host capabilities, MCP servers, apps, shell, computer, agents or hooks. Tool/action notifications and mismatched identities/final messages are rejected. Prompts and external source text cannot expand tools. Account/configuration checks precede the turn.
+
+The result is `{result, searches, usage}`. `result` is schema-validated model output. `searches` comes from completed provider events and includes query strings and observed candidate URLs. **URLs are leads, not proof of captured page content.** Applications must capture evidence independently, enforce access rules and validate citation IDs. Unknown usage is null. No raw diagnostics or account information is returned.
+
+Calls share the existing Integrator Codex lock. The total deadline includes runtime startup and lock wait, defaults to 240 seconds, and cannot exceed 240 seconds. AbortSignal cancellation and deadline failure terminate the bridge process group, including provider descendants. Requests are never silently retried. Prompt size is 80 KiB, schema 16 KiB/depth 16, result 128 KiB, and at most 16 completed search events with 8 observed URLs each. External schema references are forbidden.
+
+## Qualification status
+
+November 9, 2026: the installed VPS binary reports `codex-cli 0.163.0`. Its generated experimental schema confirms `webSearch` items, search/openPage/findInPage actions, and optional structured results. This is protocol evidence, **not live account qualification**. SSH cannot currently run as the authenticated `scheduler` user without an operator sudo session. Synthetic protocol/process tests exercise restrictions and cancellation; no real provider request has yet been made for this candidate.
+
+Once the exact candidate artifact is installed in an operator-owned staging directory, a privileged operator can run `scripts/qualify-research.mjs --output <new-private-report>` under the existing inference identity and isolated worker/transient unit described by Idea Maker's deployment package. Use its existing HOME, private authentication and cooperating lock. Do not copy credentials, weaken sudo policy, or substitute the SSH user's login. The script makes only public documentation queries and deliberately requests an unavailable host action, then checks cancellation. It never creates Scheduler tasks or sends messages.
+
+The final worker isolation qualification remains separate: this module's tool contract does not confer OS-level access isolation on a shared service UID. Activate neither the worker nor live notebook research until both gates pass. A failed report is sanitized and means disconnected; it is not permission to fall back to an API key or loosen tools.
+
+Observed schema evidence was generated read-only from the shipped Linux CLI on November 9, not inferred from an online example. Official [Web search documentation](https://learn.chatgpt.com/docs/web-search) describes hosted search; installed protocol/account compatibility is independently checked here.

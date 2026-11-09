@@ -1,6 +1,6 @@
 {
   "name": "myown-llm-integrator",
-  "version": "0.2.0",
+  "version": "0.2.1-research.1",
   "description": "Use locally authenticated AI CLIs through a reusable subscription inference API",
   "type": "module",
   "license": "AGPL-3.0-only",
@@ -24,11 +24,13 @@
     "python/bridge.py",
     "python/session_bridge.py",
     "python/provider_bridge.py",
+    "python/research_bridge.py",
     "python/myown_llm_integrator/*.py",
     "README.md",
     "NOTICE",
     "LICENSE",
-    "docs"
+    "docs",
+    "scripts/qualify-research.mjs"
   ],
   "scripts": {
     "build": "node scripts/build.mjs",

@@ -32,6 +32,7 @@ assert 'features.shell_tool=false' in args
 assert 'features.plugins=false' in args
 assert 'features.hooks=false' in args
 assert 'features.code_mode_host=false' in args
+assert 'web_search="disabled"' in args
 prompt = sys.stdin.read()
 if state.get('pid_file'):
     pathlib.Path(state['pid_file']).write_text(str(os.getpid()))
