@@ -25,6 +25,21 @@ export function runAgent<T = Record<string, unknown>>(options: AgentOptions): Pr
 export function listProviders(options?: RuntimeOptions): Promise<Provider[]>;
 export function validateProvider(provider?: string, options?: RuntimeOptions): Promise<Provider>;
 
+export interface ResearchOptions extends RuntimeOptions {
+  prompt: string;
+  schema: Record<string, unknown>;
+  webSearch: boolean;
+  provider?: 'codex';
+  model?: string | null;
+}
+export interface ResearchResult<T = Record<string, unknown>> {
+  result: T;
+  /** Observed provider activity; URLs are leads, never captured evidence. */
+  searches: { query: string; urls: string[] }[];
+  usage: Record<string, unknown> | null;
+}
+export function runResearch<T = Record<string, unknown>>(options: ResearchOptions): Promise<ResearchResult<T>>;
+
 export interface AgentSessionOptions {
   /** Python interpreter with the engine dependencies installed; otherwise uses uv. */
   python?: string;

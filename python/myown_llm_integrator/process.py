@@ -52,7 +52,7 @@ def default_lock_path(prefix='CODEX'):
 
 
 @contextmanager
-def _request_slot(cancel_event=None, *, prefix='CODEX', label='Codex'):
+def _request_slot(cancel_event=None, *, prefix='CODEX', label='Codex', deadline=None):
     if os.name != 'posix':
         raise CodexProviderError(f'{label} provider requires macOS, Linux, or WSL.')
     import fcntl
@@ -65,6 +65,8 @@ def _request_slot(cancel_event=None, *, prefix='CODEX', label='Codex'):
     descriptor = os.open(path, os.O_CREAT | os.O_RDWR, 0o600)
     try:
         while True:
+            if deadline is not None and time.monotonic() >= deadline:
+                raise CodexProviderError(f'{label} request timed out.')
             if cancel_event is not None and cancel_event.is_set():
                 raise CodexProviderError(f'{label} request cancelled.')
             try:

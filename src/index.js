@@ -1,15 +1,17 @@
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { researchRequest } from './research.js';
 
 const project = fileURLToPath(new URL('../python/', import.meta.url));
 const bridge = fileURLToPath(new URL('../python/bridge.py', import.meta.url));
+const researchBridge = fileURLToPath(new URL('../python/research_bridge.py', import.meta.url));
 const MAX_OUTPUT = 32 * 1024 * 1024;
 
 export class ProviderError extends Error {
   constructor(message) { super(message); this.name = 'ProviderError'; }
 }
 
-function invoke(request, { signal, python, uv = 'uv', env = process.env, timeoutMs = 900_000 } = {}) {
+function invoke(request, { signal, python, uv = 'uv', env = process.env, timeoutMs = 900_000 } = {}, entry = bridge) {
   if (process.platform === 'win32') return Promise.reject(new ProviderError('Use macOS, Linux, or WSL for CLI inference.'));
   if (signal?.aborted) return Promise.reject(new ProviderError('Inference request cancelled.'));
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return Promise.reject(new ProviderError('timeoutMs must be positive.'));
@@ -18,8 +20,8 @@ function invoke(request, { signal, python, uv = 'uv', env = process.env, timeout
   catch { return Promise.reject(new ProviderError('Inference request must be JSON serializable.')); }
   return new Promise((resolve, reject) => {
     const interpreter = python || env.MYOWN_LLM_PYTHON;
-    const args = interpreter ? ['-I', bridge, String(process.pid)] :
-      ['run', '--no-config', '--project', project, '--frozen', '--no-dev', 'python', '-I', bridge, String(process.pid)];
+    const args = interpreter ? ['-I', entry, String(process.pid)] :
+      ['run', '--no-config', '--project', project, '--frozen', '--no-dev', 'python', '-I', entry, String(process.pid)];
     const child = spawn(interpreter || uv, args, { env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
     let output = '', size = 0, failure, killTimer;
     const kill = (signalName) => {
@@ -53,6 +55,7 @@ function invoke(request, { signal, python, uv = 'uv', env = process.env, timeout
       cleanup(); reject(new ProviderError('Cannot start inference runtime. Install uv/Python or set the python option.'));
     });
     child.once('close', code => {
+      if (entry === researchBridge) kill('SIGKILL');
       cleanup();
       if (failure) return reject(failure);
       try {
@@ -75,6 +78,16 @@ export function runAgent(options) {
     return Promise.reject(new ProviderError('Expected a prompt string and a JSON Schema object.'));
   }
   return invoke({ operation: 'run', prompt, schema, provider, ...(model !== undefined ? { model } : {}) }, runtime);
+}
+
+/** Restricted research; search provenance is observed separately from model output. */
+export function runResearch(options) {
+  try {
+    const { request, runtime } = researchRequest(options);
+    return invoke(request, runtime, researchBridge);
+  } catch {
+    return Promise.reject(new ProviderError('Invalid research request, provider, schema, or deadline.'));
+  }
 }
 
 /** List presets without invoking a provider or accessing credentials. */
