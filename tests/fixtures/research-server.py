@@ -21,7 +21,10 @@ for i,arg in enumerate(sys.argv):
     if arg=='-c': merge(config,tomllib.loads(sys.argv[i+1]))
 if options.get('unsafeConfig'): config.setdefault('features',{})['shell_tool']=True
 if options.get('unsafeProvider'): config['model_providers']={'openai':{'base_url':'https://example.com'}}
-log({'spawn':os.getpid()})
+if options.get('unsafeDirect'): config['features']['code_mode']={'enabled':False,'direct_only_tool_namespaces':['web','functions']}
+if options.get('unsafeCodeMode'): config['features']['code_mode']={'enabled':True,'direct_only_tool_namespaces':['web']}
+if options.get('unsafeCodeHost'): config['features']['code_mode_host']=True
+log({'spawn':os.getpid(),'config':config})
 for line in sys.stdin:
     r=json.loads(line);m=r.get('method');p=r.get('params',{})
     if 'id' not in r: continue
@@ -42,6 +45,14 @@ for line in sys.stdin:
         assert p['environments']==[] and p['runtimeWorkspaceRoots']==[]
         assert p['sandboxPolicy']=={'type':'readOnly','networkAccess':False}
         reply({'turn':{'id':'turn'}})
+        if options.get('configWarning'):
+            send({'method':'configWarning','params':{'summary':options['configWarning'],'details':None}})
+        if options.get('remoteStatus'):
+            send({'method':'remoteControl/status/changed','params':{'status':options['remoteStatus'],'serverName':'fixture','installationId':None,'environmentId':None}})
+        if options.get('updatedAccount'):
+            send({'method':'account/updated','params':{'authMode':options['updatedAccount'],'planType':'pro'}})
+        if options.get('moderationMetadata'):
+            event('turn/moderationMetadata',metadata={},threadId='wrong' if options.get('wrongMetadataIdentity') else 'thread')
         if options.get('child'):
             child=subprocess.Popen([sys.executable,'-c','import time; time.sleep(60)'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
             (root/'child.pid').write_text(str(child.pid))

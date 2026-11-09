@@ -69,6 +69,12 @@ test("research returns observed search separately from schema-validated answer",
   const turns = (await f.logs()).filter((x) => x.method === "turn/start");
   assert.equal(turns.length, 1);
   assert.equal(turns[0].params.model, "catalog-default");
+  const config = (await f.logs()).find((x) => x.spawn).config;
+  assert.deepEqual(config.features.code_mode, {
+    enabled: false,
+    direct_only_tool_namespaces: ["web"],
+  });
+  assert.equal(config.features.code_mode_host, false);
 });
 test("research synthesis is web-disabled and retains unknown usage as null", async (t) => {
   const f = await fixture(t, { noUsage: true });
@@ -79,12 +85,43 @@ test("research synthesis is web-disabled and retains unknown usage as null", asy
   });
   assert.deepEqual(answer.searches, []);
   assert.equal(answer.usage, null);
+  assert.deepEqual((await f.logs()).find((x) => x.spawn).config.features.code_mode, {
+    enabled: false,
+    direct_only_tool_namespaces: [],
+  });
   assert.equal(
     (await f.logs()).find((x) => x.method === "turn/start").params.model,
     "selected-model",
   );
 });
+for (const configWarning of [
+  "Codex is ignoring 1 unrecognized configuration setting. Check for typos or deprecated settings.\n  session-flags: `features.rmcp_client` is ignored.",
+  "Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.",
+]) test("research tolerates a pinned CLI compatibility notice after verifying restrictions: " + configWarning.slice(0, 40), async (t) => {
+  const f = await fixture(t, { configWarning });
+  const answer = await api.runResearch(f.request);
+  assert.equal(answer.result.answer, "A bounded result");
+});
+test("research accepts remote-control disabled status", async (t) => {
+  const f = await fixture(t, { remoteStatus: "disabled" });
+  assert.equal((await api.runResearch(f.request)).result.answer, "A bounded result");
+});
+test("research accepts an unchanged ChatGPT account notification", async (t) => {
+  const f = await fixture(t, { updatedAccount: "chatgpt" });
+  assert.equal((await api.runResearch(f.request)).result.answer, "A bounded result");
+});
+test("research accepts moderation metadata for its own turn", async (t) => {
+  const f = await fixture(t, { moderationMetadata: true });
+  assert.equal((await api.runResearch(f.request)).result.answer, "A bounded result");
+});
 for (const [name, options, override] of [
+  ["non-web direct tools", { unsafeDirect: true }, {}],
+  ["code mode enabled", { unsafeCodeMode: true }, {}],
+  ["code host enabled", { unsafeCodeHost: true }, {}],
+  ["moderation metadata from another thread", { moderationMetadata: true, wrongMetadataIdentity: true }, {}],
+  ["account switching to API key", { updatedAccount: "apiKey" }, {}],
+  ["remote-control enabled status", { remoteStatus: "enabled" }, {}],
+  ["unknown configuration warning", { configWarning: "Unknown security restriction was ignored" }, {}],
   ["no observed search", { noSearch: true }, {}],
   ["host command", { native: "commandExecution" }, {}],
   ["file edit", { native: "fileChange" }, {}],
